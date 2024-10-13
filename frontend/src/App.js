@@ -11,20 +11,6 @@ function App() {
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/hello')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => setMessage(data.message))
-      .catch(e => {
-        console.log("There was a problem with the fetch operation: " + e.message);
-      });
-  }, []);
-
-  useEffect(() => {
     setTranscribedText(transcript);
   }, [transcript]);
 
@@ -38,7 +24,6 @@ function App() {
   const handleStopListening = () => {
     setIsListening(false);
     SpeechRecognition.stopListening();
-    setFinalText(transcribedText);
   };
 
   const handleSendToBackend = () => {
@@ -52,7 +37,7 @@ function App() {
       .then(response => response.json())
       .then(data => {
         console.log('Response from backend:', data);
-        setFinalText(data.processed_text); // Update the finalText with the processed text
+        setFinalText(data.message); // Update the finalText with the processed text
       })
       .catch(error => console.error('Error:', error));
   };
