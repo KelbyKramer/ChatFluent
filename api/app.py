@@ -8,7 +8,7 @@ sys.path.insert(0, parent_dir)
 
 from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
-from backend.text_processor import process_text, speech_to_text_spanish
+from backend.text_processor import process_text
 
 app = Flask(__name__)
 CORS(app)

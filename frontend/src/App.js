@@ -7,12 +7,26 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [language, setLanguage] = useState('en-US');
   const [conversation, setConversation] = useState([]);
+  const [speakingMessageId, setSpeakingMessageId] = useState(null);
+  const [currentWord, setCurrentWord] = useState(-1);
+  const [lastSpokenIndex, setLastSpokenIndex] = useState(-1);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [hasAISpoken, setHasAISpoken] = useState(false);
 
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
   useEffect(() => {
     setTranscribedText(transcript);
   }, [transcript]);
+
+  useEffect(() => {
+    const lastMessage = conversation[conversation.length - 1];
+    if (lastMessage && lastMessage.role === 'ai' && !hasAISpoken) {
+      console.log("Speaking AI generated message");
+      speak(lastMessage.content, language, conversation.length - 1);
+      setHasAISpoken(true);
+    }
+  }, [conversation, language, hasAISpoken, lastSpokenIndex]);
 
   const handleStartListening = () => {
     setIsListening(true);
@@ -21,10 +35,50 @@ function App() {
     SpeechRecognition.startListening({ continuous: true, language });
   };
 
-  const speak = (text, lang = 'en-US') => {
+  const speak = (text, lang = 'en-US', messageId) => {
+    setIsSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
+    
+    const words = text.split(' ');
+    let wordIndex = 0;
+  
+    setSpeakingMessageId(messageId);
+  
+    utterance.onboundary = (event) => {
+      if (event.name === 'word') {
+        setCurrentWord(wordIndex);
+        wordIndex++;
+      }
+    };
+  
+    utterance.onend = () => {
+      setSpeakingMessageId(null);
+      setCurrentWord(-1);
+      setIsSpeaking(false);
+      setLastSpokenIndex(-1);
+    };
+  
     window.speechSynthesis.speak(utterance);
+  };
+
+  const HighlightedText = ({ text, currentWord, isSpeaking }) => {
+    const words = text.split(' ');
+    return (
+      <span>
+        {words.map((word, index) => (
+          <span
+            key={index}
+            style={{
+              backgroundColor: isSpeaking && index === currentWord ? 'yellow' : 'transparent',
+              padding: '0 2px',
+            }}
+          >
+            {word}{' '}
+          </span>
+        ))}
+      </span>
+    );
   };
 
   const handleStopListening = () => {
@@ -44,11 +98,8 @@ function App() {
     })
       .then(response => response.json())
       .then(data => {
-        console.log('Response from backend:', data);
-        // Add AI response to conversation
-        // TODO: Abstract this to current and native language, implement translate UI functionality
-        setConversation(prev => [...prev, { role: 'ai', content: data.message.spanish }]);
-        speak(data.message.spanish, language)
+        setConversation(prev => [...prev, { role: 'ai', content: data.message.conversation }]);
+        setHasAISpoken(false);
         setFinalText('');
         resetTranscript();
       })
@@ -89,10 +140,15 @@ function App() {
             borderRadius: '5px',
             margin: '10px 0'
           }}>
-            <strong>{message.role === 'user' ? 'You:' : 'AI:'}</strong> {message.content}
-            {<button onClick={() => speak(message.content, language)} style={{marginLeft: '10px'}}>
+            <strong>{message.role === 'user' ? 'You:' : 'AI:'}</strong>{' '}
+            <HighlightedText
+              text={message.content}
+              currentWord={currentWord}
+              isSpeaking={speakingMessageId === index}
+            />
+            <button onClick={() => speak(message.content, language, index)} style={{marginLeft: '10px'}}>
               Speak
-            </button>}
+            </button>
           </div>
         ))}
       </div>
