@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
+import { FaMicrophone, FaStop } from 'react-icons/fa';
+import { ConversationItem, HighlightedTextProps } from './types';
+import ListeningComponent from './components/ListeningComponent';
+
 
 function App() {
-  const [transcribedText, setTranscribedText] = useState('');
-  const [finalText, setFinalText] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [language, setLanguage] = useState('en-US');
-  const [conversation, setConversation] = useState([]);
-  const [speakingMessageId, setSpeakingMessageId] = useState(null);
-  const [currentWord, setCurrentWord] = useState(-1);
-  const [lastSpokenIndex, setLastSpokenIndex] = useState(-1);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [hasAISpoken, setHasAISpoken] = useState(false);
+  const [transcribedText, setTranscribedText] = useState<string>('');
+  const [finalText, setFinalText] = useState<string>('');
+  const [isListening, setIsListening] = useState<boolean>(false);
+  const [language, setLanguage] = useState<string>('en-US');
+  const [conversation, setConversation] = useState<ConversationItem[]>([]);
+  const [speakingMessageId, setSpeakingMessageId] = useState<number | null>(null);
+  const [currentWord, setCurrentWord] = useState<number>(-1);
+  const [lastSpokenIndex, setLastSpokenIndex] = useState<number>(-1);
+  const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [hasAISpoken, setHasAISpoken] = useState<boolean>(false);
 
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
@@ -20,27 +24,18 @@ function App() {
   }, [transcript]);
 
   useEffect(() => {
-    const lastMessage = conversation[conversation.length - 1];
+    const lastMessage: ConversationItem = conversation[conversation.length - 1];
     if (lastMessage && lastMessage.role === 'ai' && !hasAISpoken) {
-      console.log("Speaking AI generated message");
       speak(lastMessage.content, language, conversation.length - 1);
       setHasAISpoken(true);
     }
   }, [conversation, language, hasAISpoken, lastSpokenIndex]);
 
-  const handleStartListening = () => {
-    setIsListening(true);
-    setFinalText('');
-    resetTranscript();
-    SpeechRecognition.startListening({ continuous: true, language });
-  };
-
-  const speak = (text, lang = 'en-US', messageId) => {
+  const speak = (text: string, lang = 'en-US', messageId: number) => { // TODO change messageId type
     setIsSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    
-    const words = text.split(' ');
+  
     let wordIndex = 0;
   
     setSpeakingMessageId(messageId);
@@ -62,11 +57,11 @@ function App() {
     window.speechSynthesis.speak(utterance);
   };
 
-  const HighlightedText = ({ text, currentWord, isSpeaking }) => {
+  const HighlightedText: React.FC<HighlightedTextProps> = ({ text, currentWord, isSpeaking }) => {
     const words = text.split(' ');
     return (
       <span>
-        {words.map((word, index) => (
+        {words.map((word: string, index: number) => (
           <span
             key={index}
             style={{
@@ -81,7 +76,24 @@ function App() {
     );
   };
 
+  //TODO: refactor listening/speaking/other functions to other files to make main page cleaner
+  const toggleListening = () => {
+    if (isListening) {
+      handleStopListening();
+    } else {
+      handleStartListening();
+    }
+  };
+
+  const handleStartListening = () => {
+    setIsListening(true);
+    setFinalText('');
+    resetTranscript();
+    SpeechRecognition.startListening({ continuous: true, language });
+  };
+
   const handleStopListening = () => {
+    
     setIsListening(false);
     SpeechRecognition.stopListening();
     const userInput = finalText || transcribedText;
@@ -117,11 +129,24 @@ function App() {
           <option value="en-US">English</option>
           <option value="es-ES">Spanish</option>
         </select>
-        <button onClick={handleStartListening} disabled={isListening}>
-          Start Listening
-        </button>
-        <button onClick={handleStopListening} disabled={!isListening}>
-          Stop Listening
+        <button 
+          onClick={toggleListening} 
+          style={{
+            width: '60px',
+            height: '60px',
+            borderRadius: '50%',
+            backgroundColor: isListening ? '#ff4136' : '#0074D9',
+            border: 'none',
+            color: 'white',
+            fontSize: '24px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            cursor: 'pointer',
+            margin: '10px'
+          }}
+        >
+          {isListening ? <FaStop /> : <FaMicrophone />}
         </button>
         <button onClick={resetTranscript}>Reset</button>
       </div>
