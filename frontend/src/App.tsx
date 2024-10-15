@@ -3,7 +3,7 @@ import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognitio
 import { FaMicrophone, FaStop } from 'react-icons/fa';
 import { ConversationItem, HighlightedTextProps } from './types';
 import ListeningComponent from './components/ListeningComponent';
-
+import { processSpeech } from './api/speechApi';
 
 function App() {
   const [transcribedText, setTranscribedText] = useState<string>('');
@@ -31,7 +31,8 @@ function App() {
     }
   }, [conversation, language, hasAISpoken, lastSpokenIndex]);
 
-  const speak = (text: string, lang = 'en-US', messageId: number) => { // TODO change messageId type
+  // TODO: separate component for speak functionality
+  const speak = (text: string, lang = 'en-US', messageId: number) => {
     setIsSpeaking(true);
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
@@ -57,6 +58,7 @@ function App() {
     window.speechSynthesis.speak(utterance);
   };
 
+  // TODO: separate component for HighlightedText
   const HighlightedText: React.FC<HighlightedTextProps> = ({ text, currentWord, isSpeaking }) => {
     const words = text.split(' ');
     return (
@@ -92,8 +94,7 @@ function App() {
     SpeechRecognition.startListening({ continuous: true, language });
   };
 
-  const handleStopListening = () => {
-    
+  const handleStopListening = async () => {
     setIsListening(false);
     SpeechRecognition.stopListening();
     const userInput = finalText || transcribedText;
@@ -101,21 +102,20 @@ function App() {
     // Add user input to conversation
     setConversation(prev => [...prev, { role: 'user', content: userInput }]);
   
-    fetch('http://localhost:5000/api/process-speech', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ text: userInput }),
-    })
-      .then(response => response.json())
-      .then(data => {
-        setConversation(prev => [...prev, { role: 'ai', content: data.message.conversation }]);
-        setHasAISpoken(false);
-        setFinalText('');
-        resetTranscript();
-      })
-      .catch(error => console.error('Error:', error));
+    const result = await processSpeech(userInput);
+    
+    if (result.success && result.data) {
+      setConversation(prev => [...prev, result.data] as ConversationItem[]);
+      setHasAISpoken(false);
+    } else {
+      // Handle error (e.g., show error message to user)
+      console.error('Error processing speech:', result.error);
+      // You might want to add an error message to the conversation or show a notification
+      setConversation(prev => [...prev, { role: 'ai', content: 'Sorry, there was an error processing your request.' }]);
+    }
+  
+    setFinalText('');
+    resetTranscript();
   };
 
   if (!browserSupportsSpeechRecognition) {
