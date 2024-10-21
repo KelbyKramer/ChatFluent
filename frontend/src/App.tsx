@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { FaMicrophone, FaStop } from 'react-icons/fa';
-import { ConversationItem, HighlightedTextProps } from './types';
+import { ConversationItem } from './types';
+import HighlightedText from './components/HighlightedText';
 import ListeningComponent from './components/ListeningComponent';
 import { processSpeech } from './api/speechApi';
+import ConversationList from './components/ConversationList';
 
 function App() {
   const [transcribedText, setTranscribedText] = useState<string>('');
@@ -58,26 +60,6 @@ function App() {
     window.speechSynthesis.speak(utterance);
   };
 
-  // TODO: separate component for HighlightedText
-  const HighlightedText: React.FC<HighlightedTextProps> = ({ text, currentWord, isSpeaking }) => {
-    const words = text.split(' ');
-    return (
-      <span>
-        {words.map((word: string, index: number) => (
-          <span
-            key={index}
-            style={{
-              backgroundColor: isSpeaking && index === currentWord ? 'yellow' : 'transparent',
-              padding: '0 2px',
-            }}
-          >
-            {word}{' '}
-          </span>
-        ))}
-      </span>
-    );
-  };
-
   //TODO: refactor listening/speaking/other functions to other files to make main page cleaner
   const toggleListening = () => {
     if (isListening) {
@@ -100,7 +82,7 @@ function App() {
     const userInput = finalText || transcribedText;
     
     // Add user input to conversation
-    setConversation(prev => [...prev, { role: 'user', content: userInput }]);
+    setConversation(prev => [...prev, { role: 'user', content: userInput, translation: null }]);
   
     const result = await processSpeech(userInput);
     
@@ -111,7 +93,7 @@ function App() {
       // Handle error (e.g., show error message to user)
       console.error('Error processing speech:', result.error);
       // You might want to add an error message to the conversation or show a notification
-      setConversation(prev => [...prev, { role: 'ai', content: 'Sorry, there was an error processing your request.' }]);
+      setConversation(prev => [...prev, { role: 'ai', content: 'Sorry, there was an error processing your request.', translation: 'Sorry, translation is not available' }]);
     }
   
     setFinalText('');
@@ -156,27 +138,13 @@ function App() {
           {transcribedText || 'Start speaking...'}
         </p>
       </div>
-      <div style={{margin: '20px 0', maxHeight: '400px', overflowY: 'auto'}}>
-        <h3>Conversation:</h3>
-        {conversation.map((message, index) => (
-          <div key={index} style={{
-            backgroundColor: message.role === 'user' ? '#e6f7ff' : '#f0f0f0',
-            padding: '10px',
-            borderRadius: '5px',
-            margin: '10px 0'
-          }}>
-            <strong>{message.role === 'user' ? 'You:' : 'AI:'}</strong>{' '}
-            <HighlightedText
-              text={message.content}
-              currentWord={currentWord}
-              isSpeaking={speakingMessageId === index}
-            />
-            <button onClick={() => speak(message.content, language, index)} style={{marginLeft: '10px'}}>
-              Speak
-            </button>
-          </div>
-        ))}
-      </div>
+      <ConversationList
+        conversation={conversation}
+        currentWord={currentWord}
+        speakingMessageId={speakingMessageId}
+        speak={speak}
+        language={language}
+      />
     </div>
   );
 }

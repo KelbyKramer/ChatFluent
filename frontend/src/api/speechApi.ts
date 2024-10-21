@@ -17,7 +17,7 @@ export const processSpeech = async (userInput: string): Promise<ApiResponse> => 
       const data = await response.json();
       return { 
         success: true, 
-        data: { role: 'ai', content: data.message.conversation }
+        data: { role: 'ai', content: data.message.conversation, translation: data.message.translation }
       };
     } catch (error) {
       console.error('Error:', error);

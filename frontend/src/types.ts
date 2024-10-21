@@ -1,6 +1,7 @@
 export interface ConversationItem {
     role: 'user' | 'assistant' | 'ai';
     content: string;
+    translation: string | null;
   }
   
   export interface HighlightedTextProps {
