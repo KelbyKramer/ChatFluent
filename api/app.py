@@ -19,8 +19,13 @@ def process_speech():
     print(request)
     data = request.json
     text = data.get('text', '')
+    conversation_history = data.get('conversation_history', '')
 
-    response = process_text(text)
+    response = process_text(text, conversation_history)
+
+    # Log the evolving summary
+    print("Full response", response)
+    print("Current comprehensive summary:", response.get('summary'))
 
     return jsonify(message=response)
 

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { FaMicrophone, FaStop } from 'react-icons/fa';
 import { ConversationItem } from './types';
-import HighlightedText from './components/HighlightedText';
-import ListeningComponent from './components/ListeningComponent';
 import { processSpeech } from './api/speechApi';
 import ConversationList from './components/ConversationList';
 
@@ -82,7 +80,7 @@ function App() {
     const userInput = finalText || transcribedText;
     
     // Add user input to conversation
-    setConversation(prev => [...prev, { role: 'user', content: userInput, translation: null }]);
+    setConversation(prev => [...prev, { role: 'user', content: userInput, translation: "" }]);
   
     const result = await processSpeech(userInput);
     

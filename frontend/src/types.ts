@@ -1,7 +1,8 @@
 export interface ConversationItem {
     role: 'user' | 'assistant' | 'ai';
     content: string;
-    translation: string | null;
+    translation: string; // This could be not included for user input
+    summary?: string
   }
   
   export interface HighlightedTextProps {
