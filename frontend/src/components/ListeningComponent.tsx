@@ -1,51 +1,58 @@
 import React from 'react';
-import SpeechRecognition, { useSpeechRecognition } from 'react-speech-recognition';
 import { FaMicrophone, FaMicrophoneSlash } from 'react-icons/fa';
-import { ConversationItem } from '../types';
+import azureSpeech from '../services/azureSpeech';
 
 interface ListeningComponentProps {
   onInputReceived: (text: string) => void;
   isListening: boolean;
   setIsListening: React.Dispatch<React.SetStateAction<boolean>>;
+  language: string;
 }
 
 const ListeningComponent: React.FC<ListeningComponentProps> = ({
   onInputReceived,
   isListening,
-  setIsListening
+  setIsListening,
+  language
 }) => {
-  const {
-    transcript,
-    resetTranscript,
-    browserSupportsSpeechRecognition
-  } = useSpeechRecognition();
-
+  const [transcribedText, setTranscribedText] = React.useState('');
   const startListening = () => {
     setIsListening(true);
-    SpeechRecognition.startListening({ continuous: true });
+    azureSpeech.startRecognition(
+      language,
+      // Interim results
+      (text) => {
+        setTranscribedText(text);
+      },
+      // Final result
+      (text) => {
+        setTranscribedText(text);
+        onInputReceived(text);
+      },
+      // Error handling
+      (error) => {
+        console.error('Speech recognition error:', error);
+        setIsListening(false);
+      }
+    );
   };
 
   const stopListening = () => {
     setIsListening(false);
-    SpeechRecognition.stopListening();
-    if (transcript) {
-      onInputReceived(transcript);
-      resetTranscript();
+    azureSpeech.stopRecognition();
+    if (transcribedText) {
+      onInputReceived(transcribedText);
+      setTranscribedText('');
     }
   };
-
-  if (!browserSupportsSpeechRecognition) {
-    return <span>Browser doesn't support speech recognition.</span>;
-  }
 
   return (
     <div>
       <button onClick={isListening ? stopListening : startListening}>
         {isListening ? <FaMicrophoneSlash /> : <FaMicrophone />}
       </button>
-      <p>{transcript}</p>
+      <p>{transcribedText}</p>
     </div>
   );
 };
-
 export default ListeningComponent;
