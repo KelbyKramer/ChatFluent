@@ -1,18 +1,23 @@
 export interface ConversationItem {
     role: 'user' | 'assistant' | 'ai';
     content: string;
-    translation: string; // This could be not included for user input
-    summary?: string
-  }
+    translation: string;
+    summary?: string;
+    response_prompts?: Array<{
+        spanish: string;
+        english: string;
+    }>;
+    isPrompt?: boolean;
+}
   
-  export interface HighlightedTextProps {
+export interface HighlightedTextProps {
     text: string;
     currentWord: number;
     isSpeaking: boolean;
-  }
+}
 
-  export interface ApiResponse {
+export interface ApiResponse {
     success: boolean;
     data?: ConversationItem;
     error?: string;
-  }
+}

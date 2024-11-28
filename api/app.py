@@ -15,17 +15,11 @@ CORS(app)
 
 @app.route('/api/process-speech', methods=['POST'])
 def process_speech():
-    print("in process speech function")
-    print(request)
     data = request.json
     text = data.get('text', '')
     conversation_history = data.get('conversation_history', '')
 
     response = process_text(text, conversation_history)
-
-    # Log the evolving summary
-    print("Full response", response)
-    print("Current comprehensive summary:", response.get('summary'))
 
     return jsonify(message=response)
 
@@ -36,7 +30,6 @@ def serve(path):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
-
 
 if __name__ == '__main__':
     app.run(debug=True)

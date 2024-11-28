@@ -4,6 +4,7 @@ import { FaMicrophone, FaStop } from 'react-icons/fa';
 import { ConversationItem } from './types';
 import { processSpeech } from './api/speechApi';
 import ConversationList from './components/ConversationList';
+import ConversationStarters from './components/ConversationStarters';
 
 function App() {
   const [transcribedText, setTranscribedText] = useState<string>('');
@@ -19,6 +20,48 @@ function App() {
 
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
+
+  const handlePromptClick = async (promptText: string) => {
+    // Add the AI prompt as a conversation item
+    const promptItem: ConversationItem = {
+        role: 'ai',
+        content: promptText,
+        translation: "",  // You might want to store the English version here
+        isPrompt: true
+    };
+    
+    setConversation(prev => [...prev, promptItem]);
+    setHasAISpoken(false);  // This will trigger the automatic speaking
+};
+
+  const handleStarterClick = async (text: string) => {
+    // Set the text (similar to what we do with speech)
+    setTranscribedText(text);
+    setFinalText(text);
+    
+    // Add user input to conversation (same as in handleStopListening)
+    setConversation(prev => [...prev, { role: 'user', content: text, translation: "" }]);
+  
+    // Process the starter text through the AI (same as in handleStopListening)
+    const result = await processSpeech(text);
+    
+    if (result.success && result.data) {
+      setConversation(prev => [...prev, result.data] as ConversationItem[]);
+      setHasAISpoken(false);  // This will trigger the automatic speaking of AI response
+    } else {
+      console.error('Error processing speech:', result.error);
+      setConversation(prev => [...prev, { 
+        role: 'ai', 
+        content: 'Sorry, there was an error processing your request.', 
+        translation: 'Sorry, translation is not available' 
+      }]);
+    }
+  
+    // Reset states (same as in handleStopListening)
+    setFinalText('');
+    resetTranscript();
+  };
+
   useEffect(() => {
     setTranscribedText(transcript);
   }, [transcript]);
@@ -28,6 +71,14 @@ function App() {
     if (lastMessage && lastMessage.role === 'ai' && !hasAISpoken) {
       speak(lastMessage.content, language, conversation.length - 1);
       setHasAISpoken(true);
+
+      // If this was a prompt question, don't add follow-up prompts
+      if (!lastMessage.isPrompt) {
+        // Handle regular AI response prompts
+        if (lastMessage.response_prompts) {
+            // Show the response prompts
+        }
+      }
     }
   }, [conversation, language, hasAISpoken, lastSpokenIndex]);
 
@@ -102,8 +153,10 @@ function App() {
     return <span>Browser doesn't support speech recognition.</span>;
   }
 
+  // TODO think out handleStarterCLick and handlePromptClick
   return (
     <div className="App">
+      <ConversationStarters onStarterClick={handlePromptClick} /> 
       <div>
         <select value={language} onChange={(e) => setLanguage(e.target.value)}>
           <option value="en-US">English</option>

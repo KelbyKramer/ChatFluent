@@ -21,7 +21,8 @@ export const processSpeech = async (userInput: string): Promise<ApiResponse> => 
           role: 'ai', 
           content: data.message.conversation, 
           translation: data.message.translation,
-          summary: data.message.summary
+          summary: data.message.summary,
+          response_prompts: data.message.response_prompts
          }
       };
     } catch (error) {
