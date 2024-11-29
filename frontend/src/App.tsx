@@ -17,6 +17,20 @@ function App() {
   const [lastSpokenIndex, setLastSpokenIndex] = useState<number>(-1);
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [hasAISpoken, setHasAISpoken] = useState<boolean>(false);
+  const [currentPrompts, setCurrentPrompts] = useState<Array<{ spanish: string; english: string }>>([
+    {
+      spanish: "¿Cómo estás?",
+      english: "How are you?"
+    },
+    {
+      spanish: "¿De dónde eres?",
+      english: "Where are you from?"
+    },
+    {
+      spanish: "¿Qué te gusta hacer?",
+      english: "What do you like to do?"
+    }
+  ]);
 
   const { transcript, resetTranscript, browserSupportsSpeechRecognition } = useSpeechRecognition();
 
@@ -77,6 +91,7 @@ function App() {
         // Handle regular AI response prompts
         if (lastMessage.response_prompts) {
             // Show the response prompts
+            setCurrentPrompts(lastMessage.response_prompts);
         }
       }
     }
@@ -156,7 +171,10 @@ function App() {
   // TODO think out handleStarterCLick and handlePromptClick
   return (
     <div className="App">
-      <ConversationStarters onStarterClick={handlePromptClick} /> 
+      <ConversationStarters 
+        onStarterClick={handlePromptClick}
+        prompts={currentPrompts} 
+      /> 
       <div>
         <select value={language} onChange={(e) => setLanguage(e.target.value)}>
           <option value="en-US">English</option>

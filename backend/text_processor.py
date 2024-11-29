@@ -4,6 +4,20 @@ import os
 import json
 openai.api_key = os.getenv("OPENAI_API_KEY")
 def process_text(input_text, conversation_history=None):
+    DEFAULT_PROMPTS = [
+        {
+            "spanish": "¿Cómo estás?",
+            "english": "How are you?"
+        },
+        {
+            "spanish": "¿De dónde eres?",
+            "english": "Where are you from?"
+        },
+        {
+            "spanish": "¿Qué te gusta hacer?",
+            "english": "What do you like to do?"
+        }
+    ]
     try:
         # Initialize system messages with instructions to use personal context
         # TODO: Clean this up
@@ -14,7 +28,8 @@ def process_text(input_text, conversation_history=None):
                             1. Responds in Spanish with context from previous interactions
                             2. Provides English translation
                             3. Maintains English summary of key points and user details
-                            4. Provides 3 recommended question response prompts for the response
+                            4. Provides 3 recommended question response prompts for the response in an array and each
+                            index has keys spanish: and english: that have the spanish and english translation of the prompt
 
                             Format your response as a JSON object with these exact keys:
                             {
@@ -54,31 +69,36 @@ def process_text(input_text, conversation_history=None):
             "role": "user", 
             "content": f"Using the context from our previous conversation history (if any), respond to this message in Spanish: {input_text}"
         })
+
         completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=messages,
             temperature=0.7,
-            max_tokens=500,
+            max_tokens=2000,
         )
-        print("messages here", messages, len(messages))
         response = completion.choices[0].message.content
         try:
             parsed_response = json.loads(response)
             # Ensure the response has all required fields
-            if not all(key in parsed_response for key in ['conversation', 'translation', 'summary']):
+            if not all(key in parsed_response for key in ['conversation', 'translation', 'summary', 'response_prompts']):
                 raise json.JSONDecodeError("Missing required fields", response, 0)
+
+            # Check if response_prompts is empty or None and set default prompts
+            if not parsed_response.get('response_prompts') or len(parsed_response['response_prompts']) == 0:
+                parsed_response['response_prompts'] = DEFAULT_PROMPTS
 
             # Compress summary if it gets too long (e.g., > 1000 characters)
             if len(parsed_response['summary']) > 1000:
                 parsed_response['summary'] = compress_summary(parsed_response['summary'])
-            print("Summary:", parsed_response['summary'])
+
             return parsed_response
         except json.JSONDecodeError:
+            json_error_string = "JSON Decode error parsing response" 
             return {
-                "conversation": "Error parsing response", 
-                "translation": "Error parsing response",
-                "summary": "Error generating summary",
-                "response_prompts": "Error generating response prompts"
+                "conversation": json_error_string, 
+                "translation": json_error_string,
+                "summary": json_error_string,
+                "response_prompts": json_error_string
             }
     except Exception as e:
         print(f"Error while contacting OpenAI API: {e}")

@@ -39,7 +39,6 @@ export const ConversationList: React.FC<ConversationListProps> = ({
       setShowTranslations(prev => ({ ...prev, [index]: true }));
     }
   };
-  console.log("conversation here", conversation)
   return (
     <div style={{margin: '20px 0', maxHeight: '400px', overflowY: 'auto'}}>
       <h3>Conversation:</h3>
