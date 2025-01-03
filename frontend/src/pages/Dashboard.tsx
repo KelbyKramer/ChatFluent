@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import { Navigate, useLocation } from 'react-router-dom';
 import LoginButton from '../components/LoginButton';
+import InteractiveSession from './InteractiveSession';
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
@@ -68,6 +69,7 @@ const Dashboard: React.FC = () => {
       <h1>Dashboard</h1>
       <p>Welcome {user?.email}</p>
       <pre>{JSON.stringify(user, null, 2)}</pre>
+      <InteractiveSession />
       <LoginButton />
     </div>
   );
