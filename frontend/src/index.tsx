@@ -13,7 +13,19 @@ root.render(
       domain="dev-23j2qv23h4mq7jhe.us.auth0.com"
       clientId="HzPC4dQ7sxiCqdAtJ96OrkIzB7rwLj4J"
       authorizationParams={{
-        redirect_uri: `${window.location.origin}/dashboard`,
+        redirect_uri: "http://localhost:3000/dashboard",
+        scope: "openid profile email",
+      }}
+      onRedirectCallback={(appState) => {
+        console.log("Redirect callback executed", appState);
+        // Don't clear the URL immediately to allow code processing
+        setTimeout(() => {
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+        }, 1000);
       }}
       useRefreshTokens={true}
       cacheLocation="localstorage"

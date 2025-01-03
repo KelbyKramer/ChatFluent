@@ -20,9 +20,7 @@ const LoginButton: React.FC = () => {
 
   return (
     <button 
-      onClick={() => loginWithRedirect({
-        appState: { returnTo: window.location.pathname }
-      })}
+      onClick={() => loginWithRedirect()}
     >
       Log In
     </button>
